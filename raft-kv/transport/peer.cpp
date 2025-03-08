@@ -9,8 +9,8 @@ namespace kv {
 
 class PeerImpl;
 class ClientSession {
-  public:
-    explicit ClientSession(boost::asio::io_service &io_service, PeerImpl *peer);
+public:
+    explicit ClientSession(boost::asio::io_context &io_service, PeerImpl *peer);
 
     ~ClientSession() {}
 
@@ -67,7 +67,7 @@ class ClientSession {
         boost::asio::async_write(socket_, buffer, handler);
     }
 
-  private:
+private:
     boost::asio::ip::tcp::socket socket_;
     boost::asio::ip::tcp::endpoint endpoint_;
     PeerImpl *peer_;
@@ -77,8 +77,8 @@ class ClientSession {
 };
 
 class PeerImpl final : public Peer {
-  public:
-    explicit PeerImpl(boost::asio::io_service &io_service, uint64_t peer, const std::string &peer_str)
+public:
+    explicit PeerImpl(boost::asio::io_context &io_service, uint64_t peer, const std::string &peer_str)
         : peer_(peer), io_service_(io_service), timer_(io_service) {
         std::vector<std::string> strs;
         boost::split(strs, peer_str, boost::is_any_of(":"));
@@ -86,7 +86,7 @@ class PeerImpl final : public Peer {
             LOG_DEBUG("invalid host %s", peer_str.c_str());
             exit(0);
         }
-        auto address = boost::asio::ip::address::from_string(strs[0]);
+        auto address = boost::asio::ip::make_address(strs[0]);
         int port = std::atoi(strs[1].c_str());
         endpoint_ = boost::asio::ip::tcp::endpoint(address, port);
     }
@@ -113,7 +113,7 @@ class PeerImpl final : public Peer {
 
     void stop() final {}
 
-  private:
+private:
     void do_send_data(uint8_t type, const uint8_t *data, uint32_t len) {
         if (!session_) {
             session_ = std::make_shared<ClientSession>(io_service_, this);
@@ -142,20 +142,20 @@ class PeerImpl final : public Peer {
     }
 
     uint64_t peer_;
-    boost::asio::io_service &io_service_;
+    boost::asio::io_context &io_service_;
     friend class ClientSession;
     std::shared_ptr<ClientSession> session_;
     boost::asio::ip::tcp::endpoint endpoint_;
     boost::asio::deadline_timer timer_;
 };
 
-ClientSession::ClientSession(boost::asio::io_service &io_service, PeerImpl *peer)
+ClientSession::ClientSession(boost::asio::io_context &io_service, PeerImpl *peer)
     : socket_(io_service), endpoint_(peer->endpoint_), peer_(peer), peer_id_(peer_->peer_), connected_(false) {}
 
 void ClientSession::close_session() { peer_->session_ = nullptr; }
 
 std::shared_ptr<Peer> Peer::creat(uint64_t peer, const std::string &peer_str, void *io_service) {
-    std::shared_ptr<PeerImpl> peer_ptr(new PeerImpl(*(boost::asio::io_service *)io_service, peer, peer_str));
+    std::shared_ptr<PeerImpl> peer_ptr(new PeerImpl(*(boost::asio::io_context *)io_service, peer, peer_str));
     return peer_ptr;
 }
 

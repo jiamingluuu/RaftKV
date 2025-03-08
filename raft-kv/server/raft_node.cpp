@@ -368,7 +368,7 @@ void RaftNode::schedule() {
 
 void RaftNode::propose(std::shared_ptr<std::vector<uint8_t>> data, const StatusCallback &callback) {
     if (pthread_id_ != pthread_self()) {
-        io_service_.post([this, data, callback]() {
+        boost::asio::post(io_service_, [this, data, callback]() {
             Status status = node_->propose(std::move(*data));
             callback(status);
             pull_ready_events();
@@ -382,7 +382,7 @@ void RaftNode::propose(std::shared_ptr<std::vector<uint8_t>> data, const StatusC
 
 void RaftNode::process(proto::MessagePtr msg, const StatusCallback &callback) {
     if (pthread_id_ != pthread_self()) {
-        io_service_.post([this, msg, callback]() {
+        boost::asio::post(io_service_, [this, msg, callback]() {
             Status status = this->node_->step(msg);
             callback(status);
             pull_ready_events();

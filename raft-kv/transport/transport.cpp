@@ -57,7 +57,7 @@ public:
                 LOG_DEBUG("ignored message %d (sent to unknown peer %lu)", msg->type, msg->to);
             }
         };
-        io_service_.post(std::bind(callback, std::move(msgs)));
+        boost::asio::post(io_service_, std::bind(callback, std::move(msgs)));
     }
 
     void stop() final { io_service_.stop(); }
@@ -67,7 +67,7 @@ private:
     uint64_t id_;
 
     std::thread io_thread_;
-    boost::asio::io_service io_service_;
+    boost::asio::io_context io_service_;
 
     std::mutex mutex_;
     std::unordered_map<uint64_t, PeerPtr> peers_;

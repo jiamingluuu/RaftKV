@@ -10,7 +10,7 @@ namespace kv {
 class AsioServer;
 class ServerSession : public std::enable_shared_from_this<ServerSession> {
 public:
-    explicit ServerSession(boost::asio::io_service &io_service, AsioServer *server)
+    explicit ServerSession(boost::asio::io_context &io_service, AsioServer *server)
         : socket(io_service), server_(server) {}
 
     void start_read_meta() {
@@ -107,7 +107,7 @@ typedef std::shared_ptr<ServerSession> ServerSessionPtr;
 
 class AsioServer : public IoServer {
 public:
-    explicit AsioServer(boost::asio::io_service &io_service, const std::string &host, RaftServer *raft)
+    explicit AsioServer(boost::asio::io_context &io_service, const std::string &host, RaftServer *raft)
         : io_service_(io_service), acceptor_(io_service), raft_(raft) {
         std::vector<std::string> strs;
         boost::split(strs, host, boost::is_any_of(":"));
@@ -115,7 +115,7 @@ public:
             LOG_DEBUG("invalid host %s", host.c_str());
             exit(0);
         }
-        auto address = boost::asio::ip::address::from_string(strs[0]);
+        auto address = boost::asio::ip::make_address(strs[0]);
         int port = std::atoi(strs[1].c_str());
         auto endpoint = boost::asio::ip::tcp::endpoint(address, port);
 
@@ -152,7 +152,7 @@ public:
     }
 
 private:
-    boost::asio::io_service &io_service_;
+    boost::asio::io_context &io_service_;
     boost::asio::ip::tcp::acceptor acceptor_;
     RaftServer *raft_;
 };
@@ -160,7 +160,7 @@ private:
 void ServerSession::on_receive_stream_message(proto::MessagePtr msg) { server_->on_message(std::move(msg)); }
 
 std::shared_ptr<IoServer> IoServer::create(void *io_service, const std::string &host, RaftServer *raft) {
-    std::shared_ptr<AsioServer> server(new AsioServer(*(boost::asio::io_service *)io_service, host, raft));
+    std::shared_ptr<AsioServer> server(new AsioServer(*(boost::asio::io_context *)io_service, host, raft));
     return server;
 }
 

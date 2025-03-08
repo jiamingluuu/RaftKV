@@ -12,7 +12,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(dependencies
                   glib-2.0>=2.10 REQUIRED
-                  msgpack REQUIRED
+                  msgpack-c REQUIRED
                   hiredis REQUIRED
                   rocksdb REQUIRED)
 include_directories(${dependencies_INCLUDE_DIRS})

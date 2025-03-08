@@ -8,8 +8,8 @@ namespace kv {
 
 class RedisStore;
 class RedisSession : public std::enable_shared_from_this<RedisSession> {
-  public:
-    explicit RedisSession(RedisStore *server, boost::asio::io_service &io_service);
+public:
+    explicit RedisSession(RedisStore *server, boost::asio::io_context &io_service);
 
     ~RedisSession() { redisReaderFree(reader_); }
 
@@ -33,7 +33,7 @@ class RedisSession : public std::enable_shared_from_this<RedisSession> {
 
     static void keys_command(std::shared_ptr<RedisSession> self, struct redisReply *reply);
 
-  public:
+public:
     bool quit_;
     RedisStore *server_;
     boost::asio::ip::tcp::socket socket_;

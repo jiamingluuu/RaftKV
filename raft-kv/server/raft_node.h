@@ -12,7 +12,7 @@
 namespace kv {
 
 class RaftNode final : public RaftServer {
-  public:
+public:
     static void main(uint64_t id, const std::string &cluster, uint16_t port);
 
     explicit RaftNode(uint64_t id, const std::string &cluster, uint16_t port);
@@ -37,7 +37,7 @@ class RaftNode final : public RaftServer {
     void entries_to_apply(const std::vector<proto::EntryPtr> &entries, std::vector<proto::EntryPtr> &ents);
     void maybe_trigger_snapshot();
 
-  private:
+private:
     void start_timer();
     void pull_ready_events();
     Status save_snap(const proto::Snapshot &snap);
@@ -52,7 +52,7 @@ class RaftNode final : public RaftServer {
 
     uint16_t port_;
     pthread_t pthread_id_;
-    boost::asio::io_service io_service_;
+    boost::asio::io_context io_service_;
     boost::asio::deadline_timer timer_;
     uint64_t id_;
     std::vector<std::string> peers_;

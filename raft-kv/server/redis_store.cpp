@@ -154,7 +154,7 @@ RedisStore::RedisStore(RaftNode *server, std::vector<uint8_t> snap, uint16_t por
         load_kv_to_db(std::move(kv));
     }
 
-    auto address = boost::asio::ip::address::from_string("0.0.0.0");
+    auto address = boost::asio::ip::make_address("0.0.0.0");
     auto endpoint = boost::asio::ip::tcp::endpoint(address, port);
 
     acceptor_.open(endpoint.protocol());
@@ -221,7 +221,7 @@ void RedisStore::set(std::string key, std::string value, const StatusCallback &c
     pending_requests_[commit_id] = callback;
 
     server_->propose(std::move(data), [this, commit_id](const Status &status) {
-        io_service_.post([this, status, commit_id]() {
+        boost::asio::post(io_service_, [this, status, commit_id]() {
             if (status.is_ok()) {
                 return;
             }
@@ -250,7 +250,7 @@ void RedisStore::del(std::vector<std::string> keys, const StatusCallback &callba
     pending_requests_[commit_id] = callback;
 
     server_->propose(std::move(data), [this, commit_id](const Status &status) {
-        io_service_.post([commit_id, status, this]() {
+        boost::asio::post(io_service_, [commit_id, status, this]() {
             auto it = pending_requests_.find(commit_id);
             if (it != pending_requests_.end()) {
                 it->second(status);
@@ -261,9 +261,9 @@ void RedisStore::del(std::vector<std::string> keys, const StatusCallback &callba
 }
 
 void RedisStore::get_snapshot(const GetSnapshotCallback &callback) {
-    io_service_.post([this, callback] {
+    boost::asio::post(io_service_, [this, callback] {
         std::unordered_map<std::string, std::string> kv;
-        
+
         auto it = db_->NewIterator(rocksdb::ReadOptions());
         for (it->SeekToFirst(); it->Valid(); it->Next()) {
             kv[it->key().ToString()] = it->value().ToString();
@@ -278,7 +278,7 @@ void RedisStore::get_snapshot(const GetSnapshotCallback &callback) {
 }
 
 void RedisStore::recover_from_snapshot(SnapshotDataPtr snap, const StatusCallback &callback) {
-    io_service_.post([this, snap, callback] {
+    boost::asio::post(io_service_, [this, snap, callback] {
         std::unordered_map<std::string, std::string> kv;
         msgpack::object_handle oh = msgpack::unpack((const char *)snap->data(), snap->size());
         try {
@@ -346,7 +346,7 @@ void RedisStore::read_commit(proto::EntryPtr entry) {
         }
     };
 
-    io_service_.post(std::move(cb));
+    boost::asio::post(io_service_, std::move(cb));
 }
 
 void RedisStore::load_kv_to_db(const std::unordered_map<std::string, std::string> &kv) {

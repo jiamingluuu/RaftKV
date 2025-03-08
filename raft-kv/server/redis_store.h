@@ -67,7 +67,7 @@ private:
     void load_kv_to_db(const std::unordered_map<std::string, std::string> &kv);
 
     RaftNode *server_;
-    boost::asio::io_service io_service_;
+    boost::asio::io_context io_service_;
     boost::asio::ip::tcp::acceptor acceptor_;
     std::thread worker_;
     uint32_t next_request_id_;

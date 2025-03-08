@@ -49,7 +49,7 @@ static void build_redis_string_array_reply(const std::vector<std::string> &strs,
     }
 }
 
-RedisSession::RedisSession(RedisStore *server, boost::asio::io_service &io_service)
+RedisSession::RedisSession(RedisStore *server, boost::asio::io_context &io_service)
     : quit_(false), server_(server), socket_(io_service), read_buffer_(RECEIVE_BUFFER_SIZE),
       reader_(redisReaderCreate()) {}
 
